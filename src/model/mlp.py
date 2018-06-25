@@ -1,7 +1,7 @@
 
 import numpy as np
 
-from util.loss_functions import CrossEntropyError
+from util.loss_functions import *
 from model.logistic_layer import LogisticLayer
 from model.classifier import Classifier
 
@@ -43,7 +43,6 @@ class MultilayerPerceptron(Classifier):
         self.epochs = epochs
         self.outputTask = outputTask  # Either classification or regression
         self.outputActivation = outputActivation
-        self.cost = cost
 
         self.trainingSet = train
         self.validationSet = valid
@@ -79,7 +78,7 @@ class MultilayerPerceptron(Classifier):
 
         # Output layer
         outputActivation = "softmax"
-        self.layers.append(LogisticLayer(128, 10, 
+        self.layers.append(LogisticLayer(128, 10,
                            None, outputActivation, True))
 
         self.inputWeights = inputWeights
@@ -113,6 +112,10 @@ class MultilayerPerceptron(Classifier):
         # Here you have to propagate forward through the layers
         # And remember the activation values of each layer
         """
+        outp_layer = self.layers[0].forward(inp)
+        for layer in self.layers[1:]:
+            outp_layer = layer.forward(outp_layer)
+        return outp_layer
         
     def _compute_error(self, target):
         """
@@ -139,7 +142,10 @@ class MultilayerPerceptron(Classifier):
         verbose : boolean
             Print logging messages with validation accuracy if verbose is True.
         """
-        pass
+        for img, label in zip(self.trainingSet.input,
+                              self.trainingSet.label):
+            output = self._feed_forward(img)
+            print('Output', output)
 
 
 

@@ -45,7 +45,6 @@ class Perceptron(Classifier):
 
         # Initialize the weight vector with small random values
         # around 0 and 0.1
-
         self.weight = np.random.rand(self.trainingSet.input.shape[1])/10
 
         # add bias weights at the beginning with the same random initialize

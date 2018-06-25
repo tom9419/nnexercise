@@ -68,6 +68,7 @@ class LogisticLayer():
         # Some handy properties of the layers
         self.size = self.nOut
         self.shape = self.weights.shape
+        print('Shape', self.shape)
 
     def forward(self, inp):
         """
