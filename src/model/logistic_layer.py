@@ -68,7 +68,6 @@ class LogisticLayer():
         # Some handy properties of the layers
         self.size = self.nOut
         self.shape = self.weights.shape
-        print('Shape', self.shape)
 
     def forward(self, inp):
         """
@@ -89,7 +88,6 @@ class LogisticLayer():
         self.inp = inp
         outp = self._fire(inp)
         self.outp = outp
-
         return outp
 
     def computeDerivative(self, next_derivatives, next_weights):

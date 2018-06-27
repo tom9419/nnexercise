@@ -9,6 +9,19 @@ from sklearn.metrics import accuracy_score
 
 import sys
 
+One_Hot_Encoding_MAP = {
+    0: [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    1: [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    2: [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    3: [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    4: [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    5: [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+    6: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+    7: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+    8: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+    9: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+}
+
 class MultilayerPerceptron(Classifier):
     """
     A multilayer perceptron used for classification
@@ -47,8 +60,10 @@ class MultilayerPerceptron(Classifier):
         self.trainingSet = train
         self.validationSet = valid
         self.testSet = test
-        
-        if loss == 'bce':
+
+        if loss == 'ce':
+            self.loss = CrossEntropyError()
+        elif loss == 'bce':
             self.loss = BinaryCrossEntropyError()
         elif loss == 'sse':
             self.loss = SumSquaredError()
@@ -113,9 +128,9 @@ class MultilayerPerceptron(Classifier):
         # And remember the activation values of each layer
         """
         outp_layer = self.layers[0].forward(inp)
-        for layer in self.layers[1:]:
-            outp_layer = layer.forward(outp_layer)
-        return outp_layer
+        for layer_idx in range(1, len(self.layers)):
+            self.layers[layer_idx-1].outp = np.insert(outp_layer, 0, 1)
+            outp_layer = self.layers[layer_idx].forward(self.layers[layer_idx-1].outp)
         
     def _compute_error(self, target):
         """
@@ -126,13 +141,14 @@ class MultilayerPerceptron(Classifier):
         ndarray :
             a numpy array (1,nOut) containing the output of the layer
         """
-        pass
+        return self.loss.calculateError(target, self.layers[-1].outp)
     
     def _update_weights(self, learningRate):
         """
         Update the weights of the layers by propagating back the error
         """
-        pass
+        for layer in self.layers:
+            layer.updateWeights(learningRate)
         
     def train(self, verbose=True):
         """Train the Multi-layer Perceptrons
@@ -142,17 +158,27 @@ class MultilayerPerceptron(Classifier):
         verbose : boolean
             Print logging messages with validation accuracy if verbose is True.
         """
-        for img, label in zip(self.trainingSet.input,
-                              self.trainingSet.label):
-            output = self._feed_forward(img)
-            print('Output', output)
+        for epoch in range(self.epochs):
+            for img, label in zip(self.trainingSet.input,
+                                  self.trainingSet.label):
+                self._feed_forward(img)
+
+                error = self._compute_error(np.array(One_Hot_Encoding_MAP[label]))
+                print('error', error)
+                self.layers[-1].computeDerivative(self.loss.calculateDerivative(
+                    np.array(One_Hot_Encoding_MAP[label]), self.layers[-1].outp), 1.0)
+                for layer_idx in reversed(range(0, len(self.layers) - 1)):
+                    self.layers[layer_idx].computeDerivative(self.layers[layer_idx + 1].deltas,
+                                                             np.transpose(self.layers[layer_idx + 1].weights))
+                self._update_weights(self.learningRate)
 
 
 
     def classify(self, test_instance):
         # Classify an instance given the model of the classifier
         # You need to implement something here
-        pass
+        self._feed_forward(test_instance)
+        return int(np.argmax(self.layers[-1].outp))
         
 
     def evaluate(self, test=None):
