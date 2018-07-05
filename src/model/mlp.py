@@ -81,19 +81,21 @@ class MultilayerPerceptron(Classifier):
         # e.g. plotting, reporting..
         self.performances = []
 
-        self.layers = layers
-
         # Build up the network from specific layers
         self.layers = []
 
         # Input layer
         inputActivation = "sigmoid"
-        self.layers.append(LogisticLayer(train.input.shape[1], 128, 
+        self.layers.append(LogisticLayer(train.input.shape[1], layers[0],
                            None, inputActivation, False))
+
+        for layer_idx in range(1, len(layers)):
+            self.layers.append(LogisticLayer(layers[layer_idx-1], layers[layer_idx],
+                                             None, inputActivation, False))
 
         # Output layer
         outputActivation = "softmax"
-        self.layers.append(LogisticLayer(128, 10,
+        self.layers.append(LogisticLayer(layers[-1], 10,
                            None, outputActivation, True))
 
         self.inputWeights = inputWeights
@@ -159,18 +161,30 @@ class MultilayerPerceptron(Classifier):
             Print logging messages with validation accuracy if verbose is True.
         """
         for epoch in range(self.epochs):
+            if verbose:
+                print("Training epoch {0}/{1}.."
+                      .format(epoch + 1, self.epochs))
             for img, label in zip(self.trainingSet.input,
                                   self.trainingSet.label):
                 self._feed_forward(img)
-
                 error = self._compute_error(np.array(One_Hot_Encoding_MAP[label]))
-                print('error', error)
                 self.layers[-1].computeDerivative(self.loss.calculateDerivative(
                     np.array(One_Hot_Encoding_MAP[label]), self.layers[-1].outp), 1.0)
                 for layer_idx in reversed(range(0, len(self.layers) - 1)):
+                    weights_matrix = np.transpose(self.layers[layer_idx + 1].weights)
+                    weights_matrix = np.delete(weights_matrix, (0), axis=1)
                     self.layers[layer_idx].computeDerivative(self.layers[layer_idx + 1].deltas,
-                                                             np.transpose(self.layers[layer_idx + 1].weights))
+                                                             weights_matrix)
                 self._update_weights(self.learningRate)
+            if verbose:
+                accuracy = accuracy_score(self.validationSet.label,
+                                          self.evaluate(self.validationSet))
+                # Record the performance of each epoch for later usages
+                # e.g. plotting, reporting..
+                self.performances.append(accuracy)
+                print("Accuracy on validation: {0:.2f}%"
+                      .format(accuracy * 100))
+                print("-----------------------------")
 
 
 

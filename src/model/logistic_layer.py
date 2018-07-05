@@ -123,10 +123,11 @@ class LogisticLayer():
 
         # Or even more general: doesn't care which activation function is used
         # dado: derivative of activation function w.r.t the output
-        dado = self.activationDerivative(self.outp)
         if self.activationString == 'softmax':
+            dado = self.activationDerivative(self.outp)
             self.deltas = np.dot(dado, np.dot(next_derivatives, next_weights))
         else:
+            dado = self.activationDerivative(self.outp[1:])
             self.deltas = dado * np.dot(next_derivatives, next_weights)
 
         # Or you can explicitly calculate the derivatives for two cases
