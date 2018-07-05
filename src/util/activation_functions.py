@@ -9,6 +9,7 @@ from numpy import sum
 from numpy import divide
 from numpy import ones
 from numpy import asarray
+from numpy import zeros
 
 
 class Activation:
@@ -71,7 +72,14 @@ class Activation:
     @staticmethod
     def softmaxPrime(netOutput):
         # Here you have to code the softmax function
-        return netOutput * (1.0 - netOutput)
+        tmp = zeros([netOutput.size, netOutput.size])
+        for i in range(netOutput.size):
+            for x in range(netOutput.size):
+                if i == x:
+                    tmp[i, x] = netOutput[i] * (1.0 - netOutput[i])
+                else:
+                    tmp[i, x] = -netOutput[i] * netOutput[x]
+        return tmp
         
     @staticmethod
     def getActivation(str):

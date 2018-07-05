@@ -35,7 +35,7 @@ def main():
                                         data.testSet,
                                         loss='ce',
                                         learningRate=0.005,
-                                        epochs=5)
+                                        epochs=15)
                                         
     
     # Report the result #
